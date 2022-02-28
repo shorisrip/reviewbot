@@ -1,7 +1,8 @@
 import irc.bot
 import irc.strings
-from irc.client import ip_numstr_to_quad, ip_quad_to_numstr
+from irc.client import ip_quad_to_numstr
 import re
+from utils import add_new_review, write_to_destination
 
 
 class TestBot(irc.bot.SingleServerIRCBot):
@@ -26,13 +27,11 @@ class TestBot(irc.bot.SingleServerIRCBot):
             links_found = re.findall(patches_regex, e.arguments[0], re.IGNORECASE)
             for link in links_found:
                 print(link)
-        a = e.arguments[0].split(":", 1)
-        if len(a) > 1 and irc.strings.lower(a[0]) == irc.strings.lower(
-            self.connection.get_nickname()
-        ):
-            self.do_command(e, a[1].strip())
-        return
-
+                # Send to hackmd
+                result = write_to_destination(link)
+                if result == None:
+                    result = "I could not add the review to Review List"
+                self.connection.privmsg(self.channel, result)
 
     def do_command(self, e, cmd):
         nick = e.source.nick
@@ -60,6 +59,25 @@ class TestBot(irc.bot.SingleServerIRCBot):
                 "CHAT chat %s %d"
                 % (ip_quad_to_numstr(dcc.localaddress), dcc.localport),
             )
+        elif "hi" in cmd.lower():
+            c.privmsg(nick, "Hi, I am reviewbot. "
+                      "Type something like this: " +
+                      "'Pls add to review list <your_patch>' " +
+                      "on the channel and I'll add it to the Review list. " +
+                      "Or simply msg me something lke: " +
+                      "'review list <your_patch>'.")
+        # Remove code duplication
+        elif re.search(r"review\s*list", cmd, re.IGNORECASE):
+            patches_regex = r"https?://\S+"
+            links_found = re.findall(patches_regex, e.arguments[0],
+                                     re.IGNORECASE)
+            for link in links_found:
+                print(link)
+                # Send to hackmd
+                result = write_to_destination(link)
+                if result == None:
+                    result = "I could not add the review to Review List"
+                c.privmsg(nick, result)
         else:
             c.notice(nick, "Not understood: " + cmd)
 
