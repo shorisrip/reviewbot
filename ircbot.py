@@ -1,8 +1,10 @@
+import random
 import irc.bot
 import irc.strings
 from irc.client import ip_quad_to_numstr
 import re
-from utils import add_new_review, write_to_destination
+from utils import write_to_destination
+from random_replies import unknown_cmd, hello
 
 
 class TestBot(irc.bot.SingleServerIRCBot):
@@ -59,7 +61,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
                 "CHAT chat %s %d"
                 % (ip_quad_to_numstr(dcc.localaddress), dcc.localport),
             )
-        elif "hi" in cmd.lower():
+        elif any(s in cmd.lower() for s in hello):
             c.privmsg(nick, "Hi, I am reviewbot. "
                       "Type something like this: " +
                       "'Pls add to review list <your_patch>' " +
@@ -79,7 +81,8 @@ class TestBot(irc.bot.SingleServerIRCBot):
                     result = "I could not add the review to Review List"
                 c.privmsg(nick, result)
         else:
-            c.notice(nick, "Not understood: " + cmd)
+            rand_index = random.randint(0, len(unknown_cmd))
+            c.notice(nick, unknown_cmd[rand_index])
 
 
 def main():
