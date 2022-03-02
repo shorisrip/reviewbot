@@ -5,8 +5,18 @@ from hackmd import get_note, update_note
 
 
 def add_new_review(review, content):
-    if not re.search(re.escape(review), content):
-        today = date.today()
+    today = date.today()
+    date_syntax = today.strftime("%b %d, %Y") + "\n"  # todo: change to regex
+    # Check if review is present at all
+    is_review_present = re.search(re.escape(review), content)
+    # Check if review is persent under current date
+    if is_review_present:
+        # Section of note after the last H2 heading before the review
+        section_of_note = content.split(review)[0].split("\n## ")[-1]
+        index = section_of_note.find(date_syntax)
+        if index == -1:
+            is_review_present = False
+    if not is_review_present:
         date_heading = "## " + today.strftime("%b %d, %Y") + "\n"
         index = content.find(date_heading)
         # If no entry for today's date
