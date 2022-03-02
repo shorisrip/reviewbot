@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import random
 import irc.bot
 import irc.strings
