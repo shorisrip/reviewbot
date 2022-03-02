@@ -12,7 +12,7 @@ from random_replies import unknown_cmd, hello
 class TestBot(irc.bot.SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname, nickname)
-        self.channel = channel
+        self.channel = "#" + channel
 
     def on_nicknameinuse(self, c, e):
         c.nick(c.get_nickname() + "_")
