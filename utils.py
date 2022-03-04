@@ -41,6 +41,7 @@ def add_new_review(review, content):
         new_content = content[:(index + len(date_heading))] + '\n* ' + review + "\n" \
                       + content[(index + len(date_heading)):]
         return new_content
+    print("Review is already present.")
     return content
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import datetime
 import random
 import irc.bot
 import irc.strings
@@ -30,7 +30,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
             patches_regex = r"https?://\S+"
             links_found = re.findall(patches_regex, e.arguments[0], re.IGNORECASE)
             for link in links_found:
-                print(link)
+                print(str(datetime.datetime.now()), " : ", link)
                 # Send to hackmd
                 result = write_to_destination(link)
                 if result == None:
