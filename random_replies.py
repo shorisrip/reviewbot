@@ -4,6 +4,7 @@ unknown_cmd = [
   "I am not a chatbot.",
   "Talk to my hand",
   "Did you say please?",
-  "Cogito, ergo sum."
+  "Cogito, ergo sum.",
+  "I would rather not"
   ]
 hello = ["hi", "hey", "hola", "halo", "hallochen", "namaste", "hello"]
