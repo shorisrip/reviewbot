@@ -19,6 +19,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
 
     def on_welcome(self, c, e):
         c.join(self.channel)
+        print("Joined ", self.channel)
 
     def on_privmsg(self, c, e):
         self.do_command(e, e.arguments[0])
