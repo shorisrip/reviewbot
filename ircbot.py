@@ -84,6 +84,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
                 c.privmsg(nick, result)
         else:
             rand_index = random.randint(0, len(unknown_cmd)-1)
+            print("rand_index: ", rand_index)
             c.notice(nick, unknown_cmd[rand_index])
 
 
