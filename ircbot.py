@@ -83,7 +83,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
                     result = "I could not add the review to Review List"
                 c.privmsg(nick, result)
         else:
-            rand_index = random.randint(0, len(unknown_cmd))
+            rand_index = random.randint(0, len(unknown_cmd)-1)
             c.notice(nick, unknown_cmd[rand_index])
 
 
