@@ -25,7 +25,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
         self.do_command(e, e.arguments[0])
 
     def on_pubmsg(self, c, e):
-        review_list_regexp = r"(add[\s\S]*to[\s\S]*review\s*list|need[\s\S]review)"
+        review_list_regexp = r"(add[\s\S]*(to|in)[\s\S]*review\s*list|need[\s\S]review)"
         matches = re.search(review_list_regexp, e.arguments[0], re.IGNORECASE)
         if matches:
             patches_regex = r"https?://\S+"
