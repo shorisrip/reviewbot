@@ -6,7 +6,7 @@ import irc.strings
 from irc.client import ip_quad_to_numstr
 import re
 from utils import write_to_destination
-from random_replies import unknown_cmd, hello
+from random_replies import unknown_cmd, hello, thanks
 
 
 class TestBot(irc.bot.SingleServerIRCBot):
@@ -37,6 +37,10 @@ class TestBot(irc.bot.SingleServerIRCBot):
                 if result == None:
                     result = "I could not add the review to Review List"
                 self.connection.privmsg(self.channel, result)
+        # For nick mentions
+        elif self.connection.get_nickname() in e.arguments[0]:
+            if any(s in e.arguments[0].lower() for s in thanks):
+                self.connection.privmsg(self.channel, "You are welcome :)")
 
     def do_command(self, e, cmd):
         nick = e.source.nick
@@ -71,6 +75,8 @@ class TestBot(irc.bot.SingleServerIRCBot):
                       "on the channel and I'll add it to the Review list. " +
                       "Or simply msg me something lke: " +
                       "'review list <your_patch>'.")
+        elif any(s in cmd.lower() for s in thanks):
+            c.privmsg(nick, "You are welcome :)")
         # Remove code duplication
         elif re.search(r"review\s*list", cmd, re.IGNORECASE):
             patches_regex = r"https?://\S+"

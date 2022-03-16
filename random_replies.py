@@ -8,3 +8,5 @@ unknown_cmd = [
   "I would rather not"
   ]
 hello = ["hi", "hey", "hola", "halo", "hallochen", "namaste", "hello"]
+
+thanks = ["thanks", "thank you", "thank u", "thanku"]
