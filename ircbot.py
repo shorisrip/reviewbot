@@ -41,7 +41,12 @@ class TestBot(irc.bot.SingleServerIRCBot):
         elif self.connection.get_nickname() in e.arguments[0]:
             if any(s in e.arguments[0].lower() for s in thanks):
                 self.connection.privmsg(self.channel, "You are welcome :)")
-
+        elif " reviews" in e.arguments[0]:
+            self.connection.privmsg(self.channel,
+                                    "Do you want me to add your patch to the "
+                                    "Review list? Please type something like "
+                                    "add to review list <your_patch> so that "
+                                    "I can understand. Thanks.")
     def do_command(self, e, cmd):
         nick = e.source.nick
         c = self.connection
