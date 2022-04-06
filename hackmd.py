@@ -33,6 +33,6 @@ def update_note(note_id, content):
                               url=base_url + "/notes/" + str(note_id),
                              data=content)
     if response.status_code in range (200, 299):
-        return "I have added your review the to Review list"
+        return "I have added your review to the Review list"
     else:
         return None
