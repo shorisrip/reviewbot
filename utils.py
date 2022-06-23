@@ -1,13 +1,47 @@
 import re
 import os
-from datetime import date
+import datetime
+import dateutil.parser as dparser
 from hackmd import get_note, update_note
 
+def add_content(index, old_content, new_string):
+    new_content = old_content[:index] + "\n" + new_string + old_content[index:]
+    return new_content
 
-def add_new_review(review, content):
-    today = date.today()
-    date_syntax = today.strftime("%b %d, %Y") + "\n"  # todo: change to regex
-    # Check if review is present at all
+def update_review_list(review, content,topic=None, to_date=datetime.date.today()):
+    if topic:
+        review = review + " (" + topic + ")"
+    # Check if we have main heading
+    is_title = re.search("^#[ \t]+.*\n", content)
+    if not is_title:
+        title_index = 0
+        title_heading = "# Review List from " + to_date.strftime("%b %d, %Y") \
+                        + " onwards"
+        content = add_content(title_index, content, title_heading)
+        tag_index = len(title_heading)
+    else:
+        find_title = re.findall("^#[ \t]+.*\n", content)
+        tag_index = len(find_title[0])
+    # Check if we have tags
+    is_tags = re.search("tags: `.*`\n", content)
+    if not is_tags:
+        tag_heading = "###### tags: `ruck_rover`"
+        content = add_content(tag_index, content, tag_heading)
+        date_index = tag_index + len(tag_heading)
+    else:
+        find_tags = re.findall("tags: `.*`\n", content)
+        date_index = tag_index + len(find_tags[0])
+    # Check if date heading is present
+    date_syntax = to_date.strftime("%b %d, %Y") + "\n"
+    date_heading = "## " + date_syntax
+    is_date = re.search(re.escape(date_heading), content)
+    if not is_date:
+        content = add_content(date_index, content, date_heading)
+        review_index = date_index + len(date_heading)
+    else:
+        find_date_heading = re.findall(re.escape(date_heading), content)
+        review_index = date_index + len(find_date_heading[0])
+    # Check if review is present at all in the whole doc
     is_review_present = re.search(re.escape(review), content)
     # Check if review is persent under current date
     if is_review_present:
@@ -17,39 +51,100 @@ def add_new_review(review, content):
         if index == -1:
             is_review_present = False
     if not is_review_present:
-        date_heading = "## " + today.strftime("%b %d, %Y") + "\n"
-        index = content.find(date_heading)
-        # If no entry for today's date
-        if index == -1:
-            # Check if we have tags
-            is_tags = re.search("tags: `.*`\n", content)
-            if is_tags:
-                # Insert new date after tags
-                date_index = is_tags.regs[0][1]
-            else:
-                # Check if we have heading
-                is_title = re.search("^#[ \t]+.*\n", content)
-                if is_title:
-                    # Insert new date after main heading
-                    date_index = is_title.regs[0][1]
-                else:
-                    # idk, insert at the beginning?
-                    date_index = 0
-            new_content = content[:date_index] + "\n" + date_heading +\
-                          '\n* ' + review + "\n" + content[date_index:]
-            return new_content
-        new_content = content[:(index + len(date_heading))] + '\n* ' + review + "\n" \
-                      + content[(index + len(date_heading)):]
-        return new_content
-    print("Review is already present.")
-    return content
+        content = add_content(review_index, content, review)
+        return content
+    else:
+        print("Review is already present")
+        return content
 
 
-def write_to_destination(review):
+def add_new_review(review, content):
+    update_review_list(review, content)
+
+
+def move_review_to_date(review, content, to_date):
+    pass
+
+
+def add_review_under_topic(review, content, topic):
+    update_review_list(review, content, topic)
+
+
+def find_links(msg):
+    patches_regex = r"https?://\S+"
+    links_found = re.findall(patches_regex, msg, re.IGNORECASE)
+    return links_found
+
+def find_topic(msg):
+    reviews = []
+    patches_regex = r"https?://\S+"
+    topic_regexp = r"https?:.*([T|t]opic[\s\S]?:[\s\S]?.*$)"
+    reviews_parts = msg.split("http")
+    for item in reviews_parts:
+        topic_found =  re.findall(topic_regexp, item, re.IGNORECASE)
+        review_found = re.findall(patches_regex, msg, re.IGNORECASE)
+        reviews.append({"topic": topic_found[0], "patch": review_found[0]})
+    return reviews
+
+
+def find_date(msg):
+    date_found = None
+    try:
+        date_found = dparser.parse(msg, fuzzy=True, dayfirst=True)
+    except Exception as exp:
+        print("Unrecognized datetime/ datetime not found in comment: ", msg, "Exp: ", str(exp))
+    if date_found:
+        return date_found
+    return datetime.date.today() + datetime.timedelta(days=1)
+
+
+def handle_new_review_request(msg, topic=None):
+    links_found = find_links(msg)
+    for link in links_found:
+        print(str(datetime.datetime.now()), " : ", link)
+        # Send to hackmd
+        if topic:
+            result = write_to_destination(link, "add_review_under_topic", topic)
+        else:
+            result = write_to_destination(link, "new_review")
+        if not result:
+            return"I could not add the review to Review List"
+        return result
+
+def handle_new_review_request_with_topic(msg):
+    review_with_topic = find_topic(msg)
+    for item in review_with_topic:
+        print(str(datetime.datetime.now()), " : ", item["patch"], " topic: ", item["topic"])
+        # Send to hackmd
+        result = write_to_destination(item["patch"], "add_review_under_topic", item["topic"])
+    result = handle_new_review_request(msg, review_with_topic)
+    return result
+
+def handle_move_review(msg):
+    links_found = find_links(msg)
+    date_found = find_date(msg)
+    for link in links_found:
+        print("Move request: ", str(datetime.datetime.now()), " : ", link)
+        # Send to hackmd
+        result = write_to_destination(link, "move_review", date_found)
+        if not result:
+            return"I could not add the review to Review List"
+        return result
+
+def write_to_destination(review, action_type="new_review", topic=None, to_date=datetime.date.today() + datetime.timedelta(days=1)):
     note_id = os.getenv("note_id")
     content = get_note(note_id)
     if content is not None:
-        new_content = add_new_review(review, content)
-        result = update_note(note_id, new_content)
-        return result
+        if action_type == "new_review":
+            new_content = add_new_review(review, content)
+            result = update_note(note_id, new_content)
+            return result
+        if action_type == "move_review":
+            new_content = move_review_to_date(review, content, to_date)
+            result = update_note(note_id, new_content)
+            return result
+        if action_type == "add_review_under_topic":
+            new_content = add_review_under_topic(review, content, topic)
+            result = update_note(note_id, new_content)
+            return result
     return None

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-import datetime
+
 import random
 import irc.bot
 import irc.strings
 from irc.client import ip_quad_to_numstr
 import re
-from utils import write_to_destination
+from utils import write_to_destination, handle_new_review_request, \
+    handle_move_review, handle_new_review_request_with_topic
 from random_replies import unknown_cmd, hello, thanks
 
 
@@ -25,28 +26,30 @@ class TestBot(irc.bot.SingleServerIRCBot):
         self.do_command(e, e.arguments[0])
 
     def on_pubmsg(self, c, e):
+        # Add to review list
         review_list_regexp = r"(add[\s\S]*(to|in)[\s\S]*review\s*(list|queue)|need[\s\S]review)"
-        matches = re.search(review_list_regexp, e.arguments[0], re.IGNORECASE)
-        if matches:
-            patches_regex = r"https?://\S+"
-            links_found = re.findall(patches_regex, e.arguments[0], re.IGNORECASE)
-            for link in links_found:
-                print(str(datetime.datetime.now()), " : ", link)
-                # Send to hackmd
-                result = write_to_destination(link)
-                if result == None:
-                    result = "I could not add the review to Review List"
-                self.connection.privmsg(self.channel, result)
+        is_review_request = re.search(review_list_regexp, e.arguments[0], re.IGNORECASE)
+        if is_review_request:
+            topic_regexp = r"(topic: )"
+            is_topic = re.search(topic_regexp, e.arguments[0], re.IGNORECASE)
+            if is_topic:
+                result = handle_new_review_request_with_topic(e.arguments[0])
+            else:
+                result = handle_new_review_request(e.arguments[0])
+            self.connection.privmsg(self.channel, result)
         # For nick mentions
         elif self.connection.get_nickname() in e.arguments[0]:
+            # Move review to date
+            move_review_to_date_regexp = r"(move[\s\S]*to)"
+            is_move_request = re.search(move_review_to_date_regexp, e.arguments[0],
+                                        re.IGNORECASE)
+            if is_move_request:
+                result = handle_move_review(e.arguments[0])
+                self.connection.privmsg(self.channel, result)
+            # My Bot is polite
             if any(s in e.arguments[0].lower() for s in thanks):
                 self.connection.privmsg(self.channel, "You are welcome :)")
-        elif " reviews" in e.arguments[0]:
-            self.connection.privmsg(self.channel,
-                                    "Do you want me to add your patch to the "
-                                    "Review list? Please type something like "
-                                    "add to review list <your_patch> so that "
-                                    "I can understand. Thanks.")
+
     def do_command(self, e, cmd):
         nick = e.source.nick
         c = self.connection
