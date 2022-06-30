@@ -50,6 +50,7 @@ class TestBot(irc.bot.SingleServerIRCBot):
     def do_command(self, e, cmd):
         nick = e.source.nick
         c = self.connection
+        print("I was asked to do something: ", str(e))
 
         if cmd == "disconnect":
             self.disconnect()
