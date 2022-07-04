@@ -26,13 +26,12 @@ def get_note(note_id):
 def update_note(note_id, content):
     headers = {
         "Authorization": "Bearer " + auth_token,
-        "Content-Type": "text/plain",
         "Accept": "application/json"
     }
     response = requests.patch(headers = headers,
                               url=base_url + "/notes/" + str(note_id),
-                             data=content)
-    if response.status_code in range (200, 299):
+                              json={"content": content})
+    if response.status_code in range(200, 299):
         return "I have added your review to the Review list"
     else:
         return None

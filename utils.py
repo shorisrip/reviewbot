@@ -20,8 +20,9 @@ def update_review_list(review, content,topic=None, to_date=datetime.date.today()
         content = add_content(title_index, content, title_heading)
         tag_index = len(title_heading)
     else:
-        find_title = re.findall("^#[ \t]+.*\n", content)
-        tag_index = len(find_title[0])
+        # find_title = re.findall("^#[ \t]+.*\n", content)
+        tag_index = is_title.regs[0][1]
+        # tag_index = len(find_title[0])
     # Check if we have tags
     is_tags = re.search("tags: `.*`\n", content)
     if not is_tags:
@@ -29,8 +30,7 @@ def update_review_list(review, content,topic=None, to_date=datetime.date.today()
         content = add_content(tag_index, content, tag_heading)
         date_index = tag_index + len(tag_heading)
     else:
-        find_tags = re.findall("tags: `.*`\n", content)
-        date_index = tag_index + len(find_tags[0])
+        date_index = is_tags.regs[0][1]
     # Check if date heading is present
     date_syntax = to_date.strftime("%b %d, %Y") + "\n"
     date_heading = "## " + date_syntax
@@ -39,8 +39,7 @@ def update_review_list(review, content,topic=None, to_date=datetime.date.today()
         content = add_content(date_index, content, date_heading)
         review_index = date_index + len(date_heading)
     else:
-        find_date_heading = re.findall(re.escape(date_heading), content)
-        review_index = date_index + len(find_date_heading[0])
+        review_index = is_date.regs[0][1]
     # Check if review is present at all in the whole doc
     is_review_present = re.search(re.escape(review), content)
     # Check if review is persent under current date
@@ -51,7 +50,7 @@ def update_review_list(review, content,topic=None, to_date=datetime.date.today()
         if index == -1:
             is_review_present = False
     if not is_review_present:
-        content = add_content(review_index, content, review)
+        content = add_content(review_index, content, "* " + review)
         return content
     else:
         print("Review is already present")
@@ -59,7 +58,8 @@ def update_review_list(review, content,topic=None, to_date=datetime.date.today()
 
 
 def add_new_review(review, content):
-    update_review_list(review, content)
+    new_content = update_review_list(review, content)
+    return new_content
 
 
 def move_review_to_date(review, content, to_date):
