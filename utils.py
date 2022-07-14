@@ -78,8 +78,8 @@ def find_links(msg):
 def find_topic(msg):
     reviews = []
     patches_regex = r"https?://\S+"
-    topic_regexp = r"https?:.*([T|t]opic[\s\S]?:[\s\S]?.*$)"
-    reviews_parts = msg.split("http")
+    topic_regexp = r"https?://\S+ ?\(topic:.*\)"
+    reviews_parts = re.findall(r"(https?://\S+ ?\(topic:.*\)|https?://\S+)", msg, re.IGNORECASE)
     for item in reviews_parts:
         topic_found =  re.findall(topic_regexp, item, re.IGNORECASE)
         review_found = re.findall(patches_regex, msg, re.IGNORECASE)
@@ -99,8 +99,13 @@ def find_date(msg):
 
 
 def handle_new_review_request(msg, topic=None):
+    return_msg_counter = 0
+    failed_to_add = []
+    return_msg = ""
     links_found = find_links(msg)
     for link in links_found:
+        if link[-1] in [",", ";", " "]:
+            link = link[:-1]
         print(str(datetime.datetime.now()), " : ", link)
         # Send to hackmd
         if topic:
@@ -108,8 +113,15 @@ def handle_new_review_request(msg, topic=None):
         else:
             result = write_to_destination(link, "new_review")
         if not result:
-            return"I could not add the review to Review List"
-        return result
+            failed_to_add = failed_to_add + link + " "
+        else:
+            return_msg_counter += 1
+    if return_msg_counter > 0:
+        return_msg = "I have added " + str(return_msg_counter) + " to the review list"
+    if failed_to_add:
+        return_msg = return_msg + "I could not add: " + (", ".join(failed_to_add))
+    return return_msg
+
 
 def handle_new_review_request_with_topic(msg):
     review_with_topic = find_topic(msg)
